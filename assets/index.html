@@ -1,0 +1,107 @@
+<!doctype html>
+<html>  
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>JSON Formatter</title>
+        <link rel="stylesheet" href="styles.css">
+        <!-- Add Font Awesome for copy icon -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <body>
+         <textarea id="jsoninput" name="jsoninput" cols="80" rows="20" placeholder="Paste your JSON here..."></textarea>
+         <div class="button-group">
+             <input id="button" type="submit" name="button" value="Pretty JSON" onclick="formatJSON()"/>
+         </div>
+         <div class="output-container">
+             <pre id="jsonoutput"></pre>
+             <button id="copy-button" onclick="copyToClipboard()" title="Copy to clipboard">
+                 <i class="fas fa-clipboard"></i> Copy
+             </button>
+         </div>
+         
+         <footer class="attribution">
+             <p>This project is inspired by a tutorial from <a href="https://golangbot.com/webassembly-using-go/" target="_blank" rel="noopener">golangbot.com</a> on WebAssembly using Go.</p>
+             <p>Original tutorial: <a href="https://golangbot.com/webassembly-using-go/" target="_blank" rel="noopener">https://golangbot.com/webassembly-using-go/</a></p>
+         </footer>
+    </body>
+    <script>
+        function formatJSON() {
+            try {
+                const input = document.getElementById('jsoninput').value;
+                if (!input.trim()) {
+                    document.getElementById('jsonoutput').innerHTML = '<span class="empty-message">Waiting for input...</span>';
+                    document.getElementById('copy-button').style.display = 'none';
+                    return;
+                }
+                
+                // Parse and format the JSON
+                const parsedJson = JSON.parse(input);
+                const formattedJson = JSON.stringify(parsedJson, null, 4);
+                
+                // Store the raw formatted JSON for clipboard copy
+                window.formattedJsonRaw = formattedJson;
+                
+                // Apply syntax highlighting
+                const highlighted = syntaxHighlight(formattedJson);
+                document.getElementById('jsonoutput').innerHTML = highlighted;
+                
+                // Show copy button when we have formatted content
+                document.getElementById('copy-button').style.display = 'block';
+            } catch (error) {
+                document.getElementById('jsonoutput').innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
+                document.getElementById('copy-button').style.display = 'none';
+            }
+        }
+        
+        // Function to apply syntax highlighting
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        
+        // Function to copy the formatted JSON to clipboard
+        function copyToClipboard() {
+            if (window.formattedJsonRaw) {
+                navigator.clipboard.writeText(window.formattedJsonRaw)
+                    .then(() => {
+                        // Show copy success indicator
+                        const copyButton = document.getElementById('copy-button');
+                        const originalText = copyButton.innerHTML;
+                        
+                        copyButton.innerHTML = '<i class="fas fa-check-circle"></i> Copied!';
+                        copyButton.classList.add('copied');
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            copyButton.innerHTML = originalText;
+                            copyButton.classList.remove('copied');
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+            }
+        }
+        
+        // Initialize with empty state message
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('jsonoutput').innerHTML = '<span class="empty-message">Waiting for input...</span>';
+            document.getElementById('copy-button').style.display = 'none';
+        });
+     </script>
+</html>

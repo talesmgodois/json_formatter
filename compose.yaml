@@ -1,0 +1,11 @@
+services:
+  wasm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"  # Map host port 8080 to container port 8080
+    volumes:
+      - ./assets:/app/assets  # Mount local assets directory (for development)
+      - ./__inputs:/app/__inputs  # Mount local inputs directory
+    restart: unless-stopped
