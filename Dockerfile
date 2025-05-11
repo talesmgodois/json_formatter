@@ -24,7 +24,7 @@ RUN go mod download
 
 # Copy server source files
 COPY cmd/server cmd/server
-COPY assets assets
+COPY cmd/server/assets assets
 
 # Build server binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
@@ -37,9 +37,9 @@ WORKDIR /app
 # Copy WASM-related files from the wasm-builder
 COPY --from=wasm-builder /app/assets/json.wasm ./assets/json.wasm
 # Copy other static assets
-COPY assets/index.html ./assets/
-COPY assets/styles.css ./assets/
-COPY assets/wasm_exec.js ./assets/
+COPY cmd/server/assets/index.html ./assets/
+COPY cmd/server/assets/styles.css ./assets/
+COPY cmd/server/assets/wasm_exec.js ./assets/
 # Copy server binary from the server-builder
 COPY --from=server-builder /app/server .
 
