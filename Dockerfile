@@ -43,8 +43,6 @@ COPY cmd/server/assets/wasm_exec.js ./assets/
 # Copy server binary from the server-builder
 COPY --from=server-builder /app/server .
 
-# Copy input files
-COPY __inputs __inputs
 
 # Expose port (adjust if your server uses a different port)
 EXPOSE 9090
