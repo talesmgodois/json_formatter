@@ -25,7 +25,7 @@ install: ## Install dependencies of all available services
 
 
 dev: ## Runs dev servers in watch mode using nodemon
-	go run cmd/server/main.go
+	go run ./cmd/server/main.go
 
 # Production build target
 build: build-wasm build-server

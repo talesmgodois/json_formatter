@@ -20,8 +20,9 @@ var (
 
 func main() {
 
-	port := os.Getenv("SERVER_PORT")
-	if port != "" {
+	port := os.Getenv("PORT")
+	fmt.Printf("PORT=%v", port)
+	if port == "" {
 		port = "9090"
 	}
 	// // httpServeTemplates()
@@ -33,7 +34,7 @@ func main() {
 		fmt.Printf("Can't load server %v", err.Error())
 		return
 	}
-	err = http.ListenAndServe(":9090", http.FileServer(http.FS(fSys)))
+	err = http.ListenAndServe(fmt.Sprintf(":%v", port), http.FileServer(http.FS(fSys)))
 	if err != nil {
 		fmt.Println("Failed to start server", err)
 		return
