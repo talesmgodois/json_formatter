@@ -45,10 +45,9 @@ COPY --from=server-builder /app/server .
 
 # Copy input files
 COPY __inputs __inputs
-ENV PORT=${PORT:-9090}
 
 # Expose port (adjust if your server uses a different port)
-EXPOSE ${PORT}
+EXPOSE 9090
 
 # Command to run the server
 CMD ["./server"]
