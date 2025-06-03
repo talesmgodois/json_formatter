@@ -1,3 +1,5 @@
+include _make/doctor.mk
+
 # Makefile
 .DEFAULT_GOAL := help
 
@@ -5,12 +7,20 @@
 BINARY_NAME=cmd/server/main.go
 WASM_OUTPUT=assets/json.wasm
 
-.PHONY: help install dev test clean-links clean-services clean up down presentation 
+REQUIREMENTS = \
+  "node@[22.0.0, node --version]" \
+  "go@[1.20.0, go version]" \
+  "docker@[20.10.0, docker --version]"
+
+
+.PHONY: help install dev test clean-links clean-services clean up down presentation doctor
 
 help: ## Show help
 	@echo "Available make commands:"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
+upgrade-rust:
+	rustup
 
 install: ## Install dependencies of all available services
 	@echo "installing watch files systems"
@@ -40,13 +50,9 @@ build-server:
 	@echo "Building Go server..."
 	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o $(BINARY_NAME) cmd/server/main.go
 
-test: ## Runs tests concurrently
-	npx concurrently "cd stock-service && npm run test -- --watchAll" "cd api-service && npm run test -- --watchAll"
-
 clean-links: ## Clean symbolic links
 	@find . -type l ! -exec test -e {} \; -delete
 	@echo "✅ Removed dangling symlinks"
-
 
 down: ## Turns docker composer down
 	@docker compose down
@@ -74,5 +80,12 @@ logs:
 presentation: clean install setup-env migrate dev ## Runs server all steps to make server run at once
 
 compose: upnet up logs ## RUns using docker compose
+
+doctor: ## Runs checks To see if you have all the needed dependencies
+	@echo "🔍 Running environment checks..."
+	@for req in $(REQUIREMENTS); do \
+		{ $(call check_requirement,$$req); }; \
+	done
+
 
 # compose-scale: upnet up-scale logs ## RUns using docker compose
