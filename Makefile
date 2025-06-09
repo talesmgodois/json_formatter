@@ -3,9 +3,9 @@
 
 # Variables
 BINARY_NAME=cmd/server/main.go
-WASM_OUTPUT=assets/json.wasm
+WASM_OUTPUT=cmd/server/assets/json.wasm
 
-.PHONY: help install dev test clean-links clean-services clean up down presentation 
+.PHONY: help install dev test clean-services clean up down 
 
 help: ## Show help
 	@echo "Available make commands:"
@@ -25,7 +25,8 @@ install: ## Install dependencies of all available services
 
 
 dev: ## Runs dev servers in watch mode using nodemon
-	go run ./cmd/server/main.go
+	@make build-wasm
+	@go run ./cmd/server/main.go
 
 # Production build target
 build: build-wasm build-server
@@ -33,20 +34,12 @@ build: build-wasm build-server
 # Build WebAssembly
 build-wasm:
 	@echo "Building WebAssembly..."
-	GOOS=js GOARCH=wasm go build -o $(WASM_OUTPUT) cmd/wasm/main.go
+	GOOS=js GOARCH=wasm go build -o $(WASM_OUTPUT) ./cmd/wasm/main.go
 
 # Build Go server (for production)
 build-server:
 	@echo "Building Go server..."
 	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o $(BINARY_NAME) cmd/server/main.go
-
-test: ## Runs tests concurrently
-	npx concurrently "cd stock-service && npm run test -- --watchAll" "cd api-service && npm run test -- --watchAll"
-
-clean-links: ## Clean symbolic links
-	@find . -type l ! -exec test -e {} \; -delete
-	@echo "✅ Removed dangling symlinks"
-
 
 down: ## Turns docker composer down
 	@docker compose down
@@ -57,22 +50,15 @@ downnet: # Destroy network
 
 clean: clean-links down downnet ## Clean services and links
 
-upnet: ## Creates jsonnet network to be reused
-	@docker network create jsonnet
-
 up: ## Runs services network using docker compose
 	@docker compose up -d --build --force-recreate
 	@echo "✅ Services should be running now"
 
-# up-scale: ## Runs services network using docker compose
-# 	@docker compose up -d --build --force-recreate --scale api=2 --scale stocks=5
-# 	@echo "✅ Services shouldbe running now"
-
 logs:
 	@docker compose logs -f
 
-presentation: clean install setup-env migrate dev ## Runs server all steps to make server run at once
+gen-json: ## Generates unformatted json to test
+	python ./scripts/generateJson.py
 
-compose: upnet up logs ## RUns using docker compose
+compose: up logs ## RUns using docker compose
 
-# compose-scale: upnet up-scale logs ## RUns using docker compose
