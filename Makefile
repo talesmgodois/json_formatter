@@ -5,7 +5,7 @@ include _make/doctor.mk
 
 # Variables
 BINARY_NAME=cmd/server/main.go
-WASM_OUTPUT=assets/json.wasm
+WASM_OUTPUT=cmd/server/assets/json.wasm
 
 REQUIREMENTS = \
   "node@[22.0.0, node --version]" \
@@ -35,7 +35,8 @@ install: ## Install dependencies of all available services
 
 
 dev: ## Runs dev servers in watch mode using nodemon
-	go run ./cmd/server/main.go
+	@make build-wasm
+	@go run ./cmd/server/main.go
 
 # Production build target
 build: build-wasm build-server
@@ -43,7 +44,7 @@ build: build-wasm build-server
 # Build WebAssembly
 build-wasm:
 	@echo "Building WebAssembly..."
-	GOOS=js GOARCH=wasm go build -o $(WASM_OUTPUT) cmd/wasm/main.go
+	GOOS=js GOARCH=wasm go build -o $(WASM_OUTPUT) ./cmd/wasm/main.go
 
 # Build Go server (for production)
 build-server:
@@ -63,23 +64,17 @@ downnet: # Destroy network
 
 clean: clean-links down downnet ## Clean services and links
 
-upnet: ## Creates jsonnet network to be reused
-	@docker network create jsonnet
-
 up: ## Runs services network using docker compose
 	@docker compose up -d --build --force-recreate
 	@echo "✅ Services should be running now"
 
-# up-scale: ## Runs services network using docker compose
-# 	@docker compose up -d --build --force-recreate --scale api=2 --scale stocks=5
-# 	@echo "✅ Services shouldbe running now"
-
 logs:
 	@docker compose logs -f
 
-presentation: clean install setup-env migrate dev ## Runs server all steps to make server run at once
+gen-json: ## Generates unformatted json to test
+	python ./scripts/generateJson.py
 
-compose: upnet up logs ## RUns using docker compose
+compose: up logs ## RUns using docker compose
 
 doctor: ## Runs checks To see if you have all the needed dependencies
 	@echo "🔍 Running environment checks..."

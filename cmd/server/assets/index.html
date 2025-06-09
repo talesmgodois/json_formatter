@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="wasm_exec.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="a4f6a9f4-2eb3-4260-9aea-453f21903815"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("json.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+    </script>
 </head>
 <body>
 <div class="theme-toggle-container">
@@ -17,7 +25,7 @@
 
 <textarea id="jsoninput" name="jsoninput" cols="80" rows="20" placeholder="Paste your JSON here..."></textarea>
 <div class="button-group">
-    <input id="button" type="submit" name="button" value="Pretty JSON" onclick="formatJSON()"/>
+    <input id="button" type="submit" name="button" value="Pretty JSON" onclick="doJsonFormat()"/>
 </div>
 <div class="output-container">
     <pre id="jsonoutput"></pre>
@@ -32,7 +40,7 @@
 </footer>
 </body>
 <script>
-    function formatJSON() {
+    function doJsonFormat() {
         try {
             const input = document.getElementById('jsoninput').value;
             if (!input.trim()) {
@@ -40,16 +48,23 @@
                 document.getElementById('copy-button').style.display = 'none';
                 return;
             }
+            
+            console.time("formatter_js")
 
             // Parse and format the JSON
             const parsedJson = JSON.parse(input);
-            const formattedJson = JSON.stringify(parsedJson, null, 4);
-
+            const formatter_go= JSON.stringify(parsedJson, null, 4);
+            console.timeEnd("formatter_js")
+{{/*  
+            console.time("formatter_go")
+            const formatter_go = formatJSON(input);
+            
+            console.timeEnd("formatter_go")  */}}
             // Store the raw formatted JSON for clipboard copy
-            window.formattedJsonRaw = formattedJson;
+            window.formattedJsonRaw = formatter_go;
 
             // Apply syntax highlighting
-            const highlighted = syntaxHighlight(formattedJson);
+            const highlighted = syntaxHighlight(formatter_go);
             document.getElementById('jsonoutput').innerHTML = highlighted;
 
             // Show copy button when we have formatted content
